@@ -7,6 +7,8 @@ import time
 
 MIN_REQUESTS_PER_HOUR = 10 # starts at ~500 / user
 PAGES_PER_JOB = 25
+SLEEP = 5
+SHORT_SLEEP = 2
 
 def getImgur():
     config = ConfigParser.RawConfigParser()
@@ -37,14 +39,16 @@ def getImgurItems(imgur, date):
     # FIXME need to find a more elegant method that uses
     # maybe usersub and sorting by time, including paging, ensuring the number
     # of calls isn't too big...
-    pages = range(0, PAGES_PER_JOB)
     items = []
-    for page in pages:
+    for page in xrange(PAGES_PER_JOB):
         if imgur.credits['UserRemaining'] < MIN_REQUESTS_PER_HOUR:
             print "Too few credits remain"
             return items
         orig_items = imgur.gallery(section='user', sort='time', show_viral=True, page=page)
         items = items + [item for item in orig_items if item.is_album and item.images_count >= 40 and not item.nsfw and item.datetime > date]
+        if page != PAGES_PER_JOB - 1:
+            print "sleeping before asking for more posts"
+            time.sleep(SHORT_SLEEP)
     return items
 
 def post_comment(imgur, item):
@@ -53,9 +57,23 @@ def post_comment(imgur, item):
     data.sort()
     end_comment = " ".join(map(lambda x: "#{0}".format(x), data))
     comment = "Random sample for this dump: " + end_comment
-    if imgur.credits['UserRemaining'] >= MIN_REQUESTS_PER_HOUR:
-        imgur.gallery_comment(item.id, comment)
-        return True
+    if imgur.credits['UserRemaining'] >= MIN_REQUESTS_PER_HOUR + 4:
+        for attempt in range(4):
+            response = imgur.gallery_comment(item.id, comment)
+            if response is not None:
+                print response, response['id'] is not None
+            if response is not None and response['id'] is not None:
+                print "posted %s, now sleeping to help with spam" % item.id
+                time.sleep(SLEEP)
+                print "upvoting %s to help it along" % item.id
+                imgur.gallery_item_vote(item.id)
+                time.sleep(SLEEP)
+                return True
+            if attempt != 3:
+                print "Failed response - trying again for %s " % item.id
+                time.sleep(SLEEP)
+        print "Could not get a successful response when posting comment %s" % item.id
+        return False
     print "Too few credits remain for comment"
     return False
 
@@ -95,10 +113,10 @@ def main():
     imgur_items = getImgurItems(imgur, mongo_date)
     for item in imgur_items:
         # sleep for a bit because overwhelming things is bad
-        time.sleep(0.25)
+        time.sleep(SLEEP)
         if new_to_db(mongo, item):
-            print item.link
             posted = post_comment(imgur, item)
             if posted:
+                print item.link
                 insert_db(mongo, item)
 main()

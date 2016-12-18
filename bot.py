@@ -12,7 +12,7 @@ SHORT_SLEEP = 2
 
 def getImgur():
     config = ConfigParser.RawConfigParser()
-    config.read("/Users/Evan/Dropbox/imgur_app.ini")
+    config.read("/home/pi/imgur_app.ini")
     client_id = config.get("client", "id")
     client_secret = config.get("client", "secret")
     user_refresh = config.get("user", "refresh_token")
@@ -57,7 +57,7 @@ def getImgurItems(mongo, imgur, date):
             if not new_to_db(mongo, item):
                 visited = visited + 1
 
-        items = items + [item for item in orig_items if item.is_album and item.images_count >= 40 and not item.nsfw and item.datetime > date]
+        items = items + [item for item in orig_items if item.is_album and item.images_count >= 55 and not item.nsfw and item.datetime > date]
         if page != PAGES_PER_JOB - 1:
             print "sleeping before asking for more posts"
             time.sleep(SHORT_SLEEP)

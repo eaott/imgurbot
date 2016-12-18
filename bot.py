@@ -28,6 +28,10 @@ def getMongo():
     albums = collection['albums']
     return albums
 
+def new_to_db(mongo, item):
+    # see if this album id is in the albums we've looked at.
+    return mongo.find_one({'album':item.id}) is None
+
 def getLastMongoDate(mongo):
     # sorts on "post_date", descending, and gets one value.
     date = mongo.find_one(sort=[("post_date", -1)])
@@ -35,20 +39,29 @@ def getLastMongoDate(mongo):
         return 0
     return date['post_date']
 
-def getImgurItems(imgur, date):
+def getImgurItems(mongo, imgur, date):
     # FIXME need to find a more elegant method that uses
     # maybe usersub and sorting by time, including paging, ensuring the number
     # of calls isn't too big...
     items = []
+    visited = 0
     for page in xrange(PAGES_PER_JOB):
         if imgur.credits['UserRemaining'] < MIN_REQUESTS_PER_HOUR:
             print "Too few credits remain"
             return items
         orig_items = imgur.gallery(section='user', sort='time', show_viral=True, page=page)
+
+        # Yes, this is slow, and makes this function less singular in purpose,
+        # but it's for logging, which is useful for later.
+        for item in orig_items:
+            if not new_to_db(mongo, item):
+                visited = visited + 1
+
         items = items + [item for item in orig_items if item.is_album and item.images_count >= 40 and not item.nsfw and item.datetime > date]
         if page != PAGES_PER_JOB - 1:
             print "sleeping before asking for more posts"
             time.sleep(SHORT_SLEEP)
+    print "Found %d posts that are in the DB already." % visited
     return items
 
 def post_comment(imgur, item):
@@ -87,9 +100,6 @@ def insert_db(mongo, item):
     }
     mongo.insert_one(example_schema)
 
-def new_to_db(mongo, item):
-    # see if this album id is in the albums we've looked at.
-    return mongo.find_one({'album':item.id}) is None
 
 '''
 At interval that works for API calls...
@@ -110,7 +120,7 @@ def main():
         return
     print "connected to imgur"
 
-    imgur_items = getImgurItems(imgur, mongo_date)
+    imgur_items = getImgurItems(mongo, imgur, mongo_date)
     for item in imgur_items:
         # sleep for a bit because overwhelming things is bad
         time.sleep(SLEEP)

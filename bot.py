@@ -52,14 +52,14 @@ def getNewImgurItems(mongo, imgur, date):
             print "Too few credits remain"
             return items
         orig_items = imgur.gallery(section='user', sort='time', show_viral=True, page=page)
-        temp_items = []
 
         # Yes, this is slow, and makes this function less singular in purpose,
         # but it's for logging, which is useful for later.
         for item in orig_items:
-            if (item.is_album and item.images_count >= MIN_IMAGE_COUNT and
-               not item.nsfw and item.datetime > date and new_to_db(mongo, item)):
-                items.append(item)
+            if new_to_db(mongo, item):
+                if (item.is_album and item.images_count >= MIN_IMAGE_COUNT and
+                   not item.nsfw and item.datetime > date):
+                    items.append(item)
             else:
                 # Yes, we're done if visited > 0, but would like to make sure
                 # the order within the gallery call doesn't impact things.

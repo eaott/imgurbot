@@ -6,9 +6,11 @@ import datetime
 import time
 
 MIN_REQUESTS_PER_HOUR = 10 # starts at ~500 / user
-PAGES_PER_JOB = 25
+MAX_PAGES_PER_JOB = 40
 SLEEP = 5
 SHORT_SLEEP = 2
+MIN_IMAGE_COUNT = 55
+SAMPLE_SIZE = 15
 
 def getImgur():
     config = ConfigParser.RawConfigParser()
@@ -39,34 +41,40 @@ def getLastMongoDate(mongo):
         return 0
     return date['post_date']
 
-def getImgurItems(mongo, imgur, date):
-    # FIXME need to find a more elegant method that uses
-    # maybe usersub and sorting by time, including paging, ensuring the number
-    # of calls isn't too big...
+def getNewImgurItems(mongo, imgur, date):
+    # Ensuring (up to a point) that we will always go back in time far enough
+    # to see things we've visited.
     items = []
     visited = 0
-    for page in xrange(PAGES_PER_JOB):
+    page = 0
+    while visited == 0 and page < MAX_PAGES_PER_JOB:
         if imgur.credits['UserRemaining'] < MIN_REQUESTS_PER_HOUR:
             print "Too few credits remain"
             return items
         orig_items = imgur.gallery(section='user', sort='time', show_viral=True, page=page)
+        temp_items = []
 
         # Yes, this is slow, and makes this function less singular in purpose,
         # but it's for logging, which is useful for later.
         for item in orig_items:
-            if not new_to_db(mongo, item):
+            if item.is_album and item.images_count >= MIN_IMAGE_COUNT and
+               not item.nsfw and item.datetime > date and new_to_db(mongo, item):
+                items.append(item)
+            else:
+                # Yes, we're done if visited > 0, but would like to make sure
+                # the order within the gallery call doesn't impact things.
                 visited = visited + 1
 
-        items = items + [item for item in orig_items if item.is_album and item.images_count >= 55 and not item.nsfw and item.datetime > date]
-        if page != PAGES_PER_JOB - 1:
+        if visited == 0 and page != MAX_PAGES_PER_JOB - 1:
             print "sleeping before asking for more posts"
             time.sleep(SHORT_SLEEP)
+        page = page + 1
     print "Found %d posts that are in the DB already." % visited
     return items
 
 def post_comment(imgur, item):
     N = item.images_count
-    data = random.sample(xrange(11, N + 1), 10)
+    data = random.sample(xrange(11, N + 1), SAMPLE_SIZE)
     data.sort()
     end_comment = " ".join(map(lambda x: "#{0}".format(x), data))
     comment = "Random sample for this dump: " + end_comment
@@ -120,13 +128,13 @@ def main():
         return
     print "connected to imgur"
 
-    imgur_items = getImgurItems(mongo, imgur, mongo_date)
+    imgur_items = getNewImgurItems(mongo, imgur, mongo_date)
     for item in imgur_items:
-        # sleep for a bit because overwhelming things is bad
+        # sleep for a bit because overwhelming things is bad, also
+        # we're not exactly in a hurry here...
         time.sleep(SLEEP)
-        if new_to_db(mongo, item):
-            posted = post_comment(imgur, item)
-            if posted:
-                print item.link
-                insert_db(mongo, item)
+        posted = post_comment(imgur, item)
+        if posted:
+            print item.link
+            insert_db(mongo, item)
 main()

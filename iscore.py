@@ -1,9 +1,7 @@
 from bot_utils import *
 
 def main():
-    print datetime.datetime.now()
     imgur = getImgur("/Users/Evan/Dropbox/imgur_app.ini")
-    print "connected to imgur"
     if imgur.credits['UserRemaining'] < MIN_REQUESTS_PER_HOUR:
         print "Too few credits remain"
         return
@@ -18,5 +16,6 @@ def main():
                 break
             counter = counter + 1
         page = page + 1
-    print "i-score is %d" % score
+    account = imgur.get_account("RandomSampleForDumps")
+    print "%s, %d, %f" % (datetime.datetime.now(), score, account.reputation)
 main()

@@ -10,7 +10,13 @@ MAX_PAGES_PER_JOB = 45
 SLEEP = 5
 SHORT_SLEEP = 2
 MIN_IMAGE_COUNT = 55
-SAMPLE_SIZE = 15
+
+# If a post has at least SAMPLE_SIZE_CUTOFF images, then this switches from
+# "small" dump mode (SMALL_SAMPLE_SIZE images in the comment) to "large" mode
+# (LARGE_SAMPLE_SIZE images in the comment).
+SAMPLE_SIZE_CUTOFF = 200
+SMALL_SAMPLE_SIZE = 10
+LARGE_SAMPLE_SIZE = 15
 
 def getImgur():
     config = ConfigParser.RawConfigParser()
@@ -74,7 +80,10 @@ def getNewImgurItems(mongo, imgur, date):
 
 def post_comment(imgur, item):
     N = item.images_count
-    data = random.sample(xrange(11, N + 1), SAMPLE_SIZE)
+    sampleSize = SMALL_SAMPLE_SIZE
+    if N >= SAMPLE_SIZE_CUTOFF:
+        sampleSize = LARGE_SAMPLE_SIZE
+    data = random.sample(xrange(11, N + 1), sampleSize)
     data.sort()
     end_comment = " ".join(map(lambda x: "#{0}".format(x), data))
     comment = "Random sample for this dump: " + end_comment

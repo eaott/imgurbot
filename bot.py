@@ -82,6 +82,7 @@ def post_comment(imgur, item):
     N = item.images_count
     sampleSize = SMALL_SAMPLE_SIZE
     if N >= SAMPLE_SIZE_CUTOFF:
+	print "large album"
         sampleSize = LARGE_SAMPLE_SIZE
     data = random.sample(xrange(11, N + 1), sampleSize)
     data.sort()

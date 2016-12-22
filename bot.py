@@ -6,7 +6,7 @@ import datetime
 import time
 
 MIN_REQUESTS_PER_HOUR = 10 # starts at ~500 / user
-MAX_PAGES_PER_JOB = 40
+MAX_PAGES_PER_JOB = 45
 SLEEP = 5
 SHORT_SLEEP = 2
 MIN_IMAGE_COUNT = 55

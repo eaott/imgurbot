@@ -1,7 +1,7 @@
 from bot_utils import *
 
 def main():
-    imgur = getImgur("/Users/Evan/Dropbox/imgur_app.ini")
+    imgur = getImgur()
     if imgur.credits['UserRemaining'] < MIN_REQUESTS_PER_HOUR:
         print "Too few credits remain"
         return

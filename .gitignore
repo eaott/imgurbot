@@ -1,3 +1,6 @@
+Rplots.pdf
+*.RData
+*.Rhistory
 *.pyc
 *.Rproj
 *.Rproj.user*

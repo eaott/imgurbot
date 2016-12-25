@@ -15,8 +15,9 @@ p1 = ggplot(data, aes(time, iscore)) +
   ylim(c(0, iScoreMax)) +
   theme_bw() +
   theme(axis.text.y = element_text(colour = "red"))
-p2 = ggplot(data, aes(time, reputation)) +
-  geom_line(color = "blue") +
+p2 = ggplot(data) +
+  geom_line(aes(time, reputation), color = "blue") +
+  geom_line(aes(time, reputation - autoposts), color = "green") +
   scale_x_datetime() +
   ylim(c(0, reputationMax)) +
   theme_bw() +

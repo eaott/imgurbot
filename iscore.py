@@ -1,5 +1,7 @@
 from bot_utils import *
 
+def getCountBefore(mongo, date):
+    mongo.count()
 def main():
     imgur = getImgur()
     if imgur.credits['UserRemaining'] < MIN_REQUESTS_PER_HOUR:
@@ -17,5 +19,11 @@ def main():
             counter = counter + 1
         page = page + 1
     account = imgur.get_account("RandomSampleForDumps")
-    print "%s, %d, %f" % (datetime.datetime.now(), score, account.reputation)
+    mongo = getMongo()
+    # In principle, could do something like
+    # mongo.find({"comment_date": {"$lt": datetime.datetime(2016, 12, 23, 23, 55, 8)}}).count()
+    # to count all the posts before a given time, but we really want all of them
+    # for this script.
+    autoposts = mongo.count()
+    print "%s, %d, %f, %d" % (datetime.datetime.now(), score, account.reputation, autoposts)
 main()

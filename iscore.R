@@ -7,7 +7,7 @@ data$time = as.POSIXct(strftime(data$time))
 iScoreMax = 1.2 * max(data$iscore)
 reputationMax = 1.2 * max(data$reputation)
 # http://rpubs.com/kohske/dual_axis_in_ggplot2
-grid.newpage()
+#grid.newpage()
 p1 = ggplot(data, aes(time, iscore)) +
   geom_line(color = "red") +
   scale_x_datetime() +
@@ -43,5 +43,5 @@ g <- gtable_add_cols(g, g2$widths[g2$layout[ia, ]$l], length(g$widths) - 1)
 g <- gtable_add_grob(g, ax, pp$t, length(g$widths) - 1, pp$b)
 
 # draw it
-grid.draw(g)
+#grid.draw(g)
 ggsave("plot.png", g)

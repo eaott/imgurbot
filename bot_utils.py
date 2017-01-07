@@ -29,11 +29,11 @@ def getImgur(config_file="/home/pi/imgur_app.ini"):
     client = ImgurClient(client_id, client_secret, refresh_token=user_refresh)
     return client
 
-def getMongo():
-    client = MongoClient()
+def getMongo(host="localhost", temp_albums='albums'):
+    client = MongoClient(host=host)
     db = client['imgur_db']
     collection = db['imgur_collection']
-    albums = collection['albums']
+    albums = collection[temp_albums]
     return albums
 
 def new_to_db(mongo, item):
@@ -111,9 +111,13 @@ def post_comment(imgur, item):
 def insert_db(mongo, item):
     # FIXME need to be a little more careful here and thoughtful about what
     # might be needed
+    # FIXME augment with an "auto" column so that I can distinguish between "bot"
+    # and "human" comments in the future
     example_schema = {
         'album': item.id,
         'post_date': item.datetime,
-        'comment_date': datetime.datetime.utcnow()
+        'comment_date': datetime.datetime.utcnow(),
+        'auto_gen': True,
+        'fake_post_time': False
     }
     mongo.insert_one(example_schema)

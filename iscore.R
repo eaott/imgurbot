@@ -46,3 +46,6 @@ g <- gtable_add_grob(g, ax, pp$t, length(g$widths) - 1, pp$b)
 # draw it
 #grid.draw(g)
 ggsave("plot.png", g)
+
+
+summary(lm(data$iscore ~ data$reputation))

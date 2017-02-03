@@ -4,3 +4,4 @@ Rplots.pdf
 *.pyc
 *.Rproj
 *.Rproj.user*
+.Rproj.user

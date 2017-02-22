@@ -63,6 +63,9 @@ def getNewImgurItems(mongo, imgur, date):
         # but it's for logging, which is useful for later.
         for item in orig_items:
             if new_to_db(mongo, item):
+                # TODO (Feb 22, 2017): Consider adding a regex check
+                # on item.title and/or item.description for "dump" ignore-case.
+                # Might go too much the other way though.
                 if (item.is_album and item.images_count >= MIN_IMAGE_COUNT and
                    not item.nsfw and item.datetime > date):
                     items.append(item)

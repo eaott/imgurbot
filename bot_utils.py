@@ -67,7 +67,8 @@ def getNewImgurItems(mongo, imgur, date):
                 # on item.title and/or item.description for "dump" ignore-case.
                 # Might go too much the other way though.
                 if (item.is_album and item.images_count >= MIN_IMAGE_COUNT and
-                   not item.nsfw and item.datetime > date):
+                   not item.nsfw and item.datetime > date and
+                   item.privacy != "hidden"):
                     items.append(item)
             else:
                 # Yes, we're done if visited > 0, but would like to make sure
